@@ -17,12 +17,12 @@
                     </svg>
                 </div>
                 <!-- Theme Toggle -->
-                <button @click="toggleTheme" class="p-2 rounded-full cursor-pointer hover:bg-gray-600 transition-opacity duration-200" :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-600'">
-                    <svg v-if="isDarkMode" class="h-6 w-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <button @click="toggleTheme" class="cursor-pointer p-2 rounded-full hover:bg-gray-600 transition-opacity duration-200" :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-600'">
+                    <svg v-if="isDarkMode" class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
                     <svg v-else class="h-6 w-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.56 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                     </svg>
                 </button>
                 <div class="relative">
@@ -32,24 +32,24 @@
                             {{ item.name }} <span>${{ item.price }}</span>
                         </div>
                         <button class="cursor-pointer bg-blue-500 text-white p-2 rounded-md w-full transition-opacity duration-150 hover:bg-blue-600">Checkout</button>
-                        <button @click="clearCart" class="cursor-pointer bg-red-600 text-white p-2 rounded-md w-full mt-2 transition-opacity duration-150 hover:bg-blue-600">Clear Cart</button>
+                        <button @click="clearCart" class="cursor-pointer bg-red-600 text-white p-2 rounded-md w-full mt-2 transition-opacity duration-150 hover:bg-red-700">Clear Cart</button>
                     </div>
                 </div>
                 <div v-if="isLoggedIn" class="flex space-x-2">
                     <span class="leading-none">Welcome, {{ user.name }}</span>
                     <button @click="logout" class="cursor-pointer bg-red-600 p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Logout</button>
-                    <button v-if="user.is_admin" @click="showAddProduct = true" class="cursor-pointer bg-green-600 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Add Product</button>
+                    <button v-if="user.is_admin" @click="showAddProduct = true" class="cursor-pointer bg-green-600 text-white p-2 rounded-md hover:opacity-80">Add Product</button>
                 </div>
                 <div v-else class="flex space-x-2">
-                    <button @click="showLogin = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-300 transition-opacity duration-200">Login</button>
-                    <button @click="showRegister = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-300 transition-opacity duration-200">Register</button>
+                    <button @click="showLogin = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700 transition-opacity duration-200">Login</button>
+                    <button @click="showRegister = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700 transition-opacity duration-200">Register</button>
                 </div>
             </div>
         </nav>
 
         <!-- Main Content -->
         <div class="pt-24">
-            <div v-if="error" class="text-red-500 text-center p-4">
+            <div v-if="error" class="text-red-600 text-center p-4">
                 {{ error }}
             </div>
             <router-view
@@ -64,8 +64,8 @@
         </div>
 
         <!-- Login Modal -->
-        <div v-if="showLogin" class="fixed inset-0 bg-opacity-50 flex items-center justify-center bg-gray-900 bg-opacity-80">
-            <div class="p-6 rounded-lg shadow transition-colors duration-200 max-w-md w-full" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+        <div v-if="showLogin" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
+            <div class="p-6 rounded-lg shadow max-w-md w-full transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                 <h2 class="text-xl font-bold mb-4">Login</h2>
                 <input v-model="loginForm.email" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="loginForm.password" type="password" placeholder="Password" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
@@ -78,7 +78,7 @@
 
         <!-- Register Modal -->
         <div v-if="showRegister" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
-            <div class="p-6 rounded-lg shadow transition-colors duration-200 max-w-md w-full" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+            <div class="p-6 rounded-lg shadow max-w-md w-full transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                 <h2 class="text-xl font-bold mb-4">Register</h2>
                 <input v-model="registerForm.name" type="text" placeholder="Name" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="registerForm.email" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
@@ -185,8 +185,8 @@ export default {
             try {
                 this.knives = [];
                 this.error = null;
-                const params = { ...this.filters, search: this.searchQuery, page };
-                const response = await axios.get('/api/knives', { params });
+                const params = { ...this.filters, search: this.searchQuery.trim(), page };
+                const response = await axios.get('/api/steam-knives', { params });
                 console.log('Fetched knives:', response.data);
                 this.knives = response.data.data;
                 this.pagination = {
@@ -194,9 +194,12 @@ export default {
                     last_page: response.data.last_page,
                     total: response.data.total,
                 };
+                if (this.knives.length === 0 && this.searchQuery) {
+                    this.error = 'No knives found matching your search.';
+                }
             } catch (error) {
                 console.error('Failed to fetch knives:', error);
-                this.error = 'Failed to load knives. Please try again later.';
+                this.error = 'Failed to load knives from Steam Market. Please try again later.';
             }
         },
         async addToCart(knife) {
@@ -324,8 +327,11 @@ export default {
             },
             deep: true,
         },
-        searchQuery() {
-            this.fetchKnives();
+        searchQuery: {
+            handler() {
+                this.fetchKnives();
+            },
+            immediate: true,
         },
     },
 };

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/knives', [KnifeController::class, 'index']);
+Route::get('/steam-knives', [App\Http\Controllers\SteamKnifeController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

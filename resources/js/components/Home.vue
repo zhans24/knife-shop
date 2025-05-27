@@ -7,9 +7,8 @@
                 <label class="block mb-1 font-medium" :class="isDarkMode ? 'text-gray-200' : 'text-gray-800'">Type</label>
                 <select v-model="filters.type" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'">
                     <option value="">All</option>
-                    <option value="Karambit">Karambit</option>
-                    <option value="Bayonet">Bayonet</option>
-                    <option value="Butterfly">Butterfly</option>
+                    <option value="Covert Knife">Covert Knife</option>
+                    <option value="StatTrak™ Covert Knife">StatTrak™ Covert Knife</option>
                 </select>
             </div>
             <div class="mb-4">
@@ -17,29 +16,13 @@
                 <select v-model="filters.rarity" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'">
                     <option value="">All</option>
                     <option value="Covert">Covert</option>
-                    <option value="Classified">Classified</option>
-                    <option value="Rare">Rare</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="block mb-1 font-medium" :class="isDarkMode ? 'text-gray-200' : 'text-gray-800'">Wear Level</label>
-                <select v-model="filters.wear_level" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'">
-                    <option value="">All</option>
-                    <option value="Factory New">Factory New</option>
-                    <option value="Minimal Wear">Minimal Wear</option>
-                    <option value="Field-Tested">Field-Tested</option>
-                    <option value="Well-Worn">Well-Worn</option>
-                    <option value="Battle-Scarred">Battle-Scarred</option>
                 </select>
             </div>
             <div class="mb-4">
                 <label class="block mb-1 font-medium" :class="isDarkMode ? 'text-gray-200' : 'text-gray-800'">Color</label>
                 <select v-model="filters.color" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-black border-gray-300'">
                     <option value="">All</option>
-                    <option value="Red">Red</option>
-                    <option value="Blue">Blue</option>
-                    <option value="Black">Black</option>
-                    <option value="Fade">Fade</option>
+                    <option value="Purple">Purple</option>
                 </select>
             </div>
             <div class="mb-4">
@@ -68,14 +51,12 @@
             </div>
             <div class="grid grid-cols-3 gap-4 mb-20">
                 <div v-for="knife in knives" :key="knife.id" class="border p-4 rounded shadow transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-300'">
-                    <img :src="knife.image_url" :alt="knife.name" class="w-full h-40 object-cover mb-2 rounded" />
+                    <img :src="knife.image_url" :alt="knife.name" class="w-full h-40 object-contain mb-2 rounded" />
                     <h3 class="text-lg font-bold">{{ knife.name }}</h3>
-                    <p>Type: {{ knife.type }}</p>
-                    <p>Rarity: {{ knife.rarity }}</p>
-                    <p>Wear: {{ knife.wear_level }} ({{ knife.float_value }})</p>
-                    <p>Color: {{ knife.color }}</p>
-                    <p>Price: ${{ knife.price }}</p>
-                    <p>{{ knife.description }}</p>
+                    <p>Type: {{ knife.type || 'N/A' }}</p>
+                    <p>Rarity: {{ knife.rarity || 'N/A' }}</p>
+                    <p>Price: ${{ knife.price.toFixed(2) }}</p>
+                    <p>{{ knife.description || 'No description available' }}</p>
                     <button
                         @click="$emit('add-to-cart', knife)"
                         class="cursor-pointer bg-blue-600 text-white p-2 rounded-md w-full mt-2 hover:opacity-80 transition-opacity duration-150"
