@@ -14,31 +14,30 @@ class KnifeController extends Controller
     {
         $query = Knife::query();
 
-        if ($request->has('type') && $request->type) {
+        if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
-        if ($request->has('rarity') && $request->rarity) {
+        if ($request->filled('rarity')) {
             $query->where('rarity', $request->rarity);
         }
-        if ($request->has('wear_level') && $request->wear_level) {
+        if ($request->filled('wear_level')) {
             $query->where('wear_level', $request->wear_level);
         }
-        if ($request->has('color') && $request->color) {
+        if ($request->filled('color')) {
             $query->where('color', $request->color);
         }
-        if ($request->has('price_min') && $request->price_min) {
+        if ($request->filled('price_min')) {
             $query->where('price', '>=', $request->price_min);
         }
-        if ($request->has('price_max') && $request->price_max) {
+        if ($request->filled('price_max')) {
             $query->where('price', '<=', $request->price_max);
         }
-        if ($request->has('search') && $request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if ($request->filled('search')) {
+            $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
         }
 
         return response()->json($query->paginate(10));
     }
-
     public function store(Request $request)
     {
         $this->authorize('create', Knife::class);
