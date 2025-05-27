@@ -12,28 +12,25 @@ class SteamKnifeController extends Controller
     public function index(Request $request)
     {
         $page = $request->query('page', 1);
-        $search = $request->query('search', '');
         $start = ($page - 1) * 20;
-        $cacheKey = "steam_knives_page_{$page}_search_" . md5($search);
+        $cacheKey = "steam_knives_page_{$page}";
 
-        $data = Cache::remember($cacheKey, 300, function () use ($search, $start) {
+        $data = Cache::remember($cacheKey, 300, function () use ($start) {
             try {
                 $response = Http::get('https://steamcommunity.com/market/search/render/', [
-                    'query' => $search ? $search : 'knife',
+                    'query' => 'knife',
                     'appid' => 730,
                     'norender' => 1,
                     'start' => $start,
-                    'count' => 20,
+                    'count' => 5,
                 ]);
 
                 if (!$response->successful()) {
-                    Log::error('Steam API failed', ['status' => $response->status()]);
                     return ['success' => false, 'error' => 'Failed to fetch Steam data'];
                 }
 
                 return $response->json();
             } catch (\Exception $e) {
-                Log::error('Steam API exception', ['error' => $e->getMessage()]);
                 return ['success' => false, 'error' => 'Steam API request failed'];
             }
         });
@@ -42,37 +39,37 @@ class SteamKnifeController extends Controller
             return response()->json(['error' => $data['error']], 500);
         }
 
-        // Normalize Steam data to match Knife model
         $knives = collect($data['results'])->filter(function ($item) {
-            // Exclude non-knife items (e.g., stickers, charms)
             return str_contains($item['asset_description']['type'], 'Knife');
         })->map(function ($item) {
+            $type = str_replace('★ ', '', $item['asset_description']['type']);
             return [
-                'id' => $item['hash_name'], // Unique identifier
+                'id' => $item['hash_name'],
                 'name' => $item['name'],
-                'type' => str_replace('★ ', '', $item['asset_description']['type']),
-                'rarity' => 'Covert', // Steam knives are Covert
-                'price' => $item['sell_price'] / 100, // Convert cents to dollars
+                'type' => $type,
+                'rarity' => 'Covert',
+                'price' => $item['sell_price'] / 100,
                 'image_url' => 'https://steamcommunity-a.akamaihd.net/economy/image/' . $item['asset_description']['icon_url'],
                 'description' => $item['asset_description']['type'],
                 'color' => $item['asset_description']['name_color'] === '8650AC' ? 'Purple' : 'Unknown',
-                'float_value' => null, // Not provided by Steam API
-                'wear_level' => null, // Not provided by Steam API
+                'float_value' => null,
+                'wear_level' => null,
             ];
         })->values();
 
-        // Apply client-side filters if provided
-        $filters = $request->only(['type', 'rarity', 'wear_level', 'color', 'price_min', 'price_max']);
-        $filteredKnives = $knives->filter(function ($knife) use ($filters) {
-            if ($filters['type'] && $knife['type'] !== $filters['type']) return false;
-            if ($filters['rarity'] && $knife['rarity'] !== $filters['rarity']) return false;
-            if ($filters['color'] && $knife['color'] !== $filters['color']) return false;
+        $search = strtolower($request->input('search', ''));
+        $filters = $request->only(['type', 'rarity', 'color', 'price_min', 'price_max']);
+
+        $filteredKnives = $knives->filter(function ($knife) use ($filters, $search) {
+            if ($filters['type'] && $knife['type'] != $filters['type']) return false;
+            if ($filters['rarity'] && $knife['rarity'] != $filters['rarity']) return false;
+            if ($filters['color'] && $knife['color'] != $filters['color']) return false;
             if ($filters['price_min'] && $knife['price'] < $filters['price_min']) return false;
             if ($filters['price_max'] && $knife['price'] > $filters['price_max']) return false;
+            if ($search && !strpos(strtolower($knife['name']), $search)) return false;
             return true;
-        })->values();
+        });
 
-        // Simulate pagination
         $total = $data['total_count'];
         $perPage = 20;
         $lastPage = ceil($total / $perPage);
