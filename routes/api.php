@@ -5,7 +5,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\KnifeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/knives', [KnifeController::class, 'index']);
+Route::get('/knives', [KnifeController::class, 'index'])->middleware('throttle:20,1');
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 

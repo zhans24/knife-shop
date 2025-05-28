@@ -1,7 +1,8 @@
 <template>
     <div class="min-h-screen transition-colors duration-300" :class="isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'">
-        <nav class="p-4 flex justify-between items-center fixed w-full top-0 z-10" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-800 text-white'">
-            <div class="text-2xl font-bold"><router-link to="/">CS Knife Store</router-link></div>
+        <!-- Navbar -->
+        <nav class="p-4 flex justify-between items-center fixed w-full top-0 z-10 transition-colors duration-300" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-800 text-white'">
+            <div class="text-2xl font-bold"><a href="/">CS Knife Store</a></div>
             <div class="flex items-center space-x-4">
                 <div class="relative">
                     <input v-model="searchQuery" type="text" placeholder="Поиск ножей..." class="p-2 pl-10 rounded-lg border-2 border-blue-500 bg-gray-700 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 w-64" />
@@ -9,7 +10,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-600" :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-600'">
+                <button @click="toggleTheme" class="cursor-pointer p-2 rounded-full hover:bg-gray-600 transition-opacity duration-200" :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-600'">
                     <svg v-if="isDarkMode" class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
@@ -18,29 +19,29 @@
                     </svg>
                 </button>
                 <div class="relative">
-                    <button @click="toggleCart" class="bg-blue-600 p-2 rounded px-4 hover:bg-blue-700" :class="isDarkMode ? 'text-white' : 'text-white'">Корзина ({{ cart.length }})</button>
-                    <div v-if="showCart && cart.length" class="absolute top-10 right-0 p-4 rounded shadow w-64" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border-gray-300'">
+                    <button class="cursor-pointer bg-blue-600 p-2 rounded px-4 transition-opacity duration-150 hover:opacity-80" :class="isDarkMode ? 'text-white' : 'text-white'">Корзина ({{ cart.length }})</button>
+                    <div v-if="cart.length" class="absolute top-10 right-0 p-4 rounded shadow w-64 transition-colors duration-300" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black border-gray-300'">
                         <div v-for="item in cart" :key="item.id" class="flex justify-between mb-2">
                             {{ item.name }} <span>${{ item.price.toFixed(2) }}</span>
                         </div>
-                        <button @click="checkout" class="bg-blue-500 text-white p-2 rounded-md w-full hover:bg-blue-600">Оформить</button>
-                        <button @click="clearCart" class="bg-red-600 text-white p-2 rounded-md w-full mt-2 hover:bg-red-700">Очистить</button>
+                        <button class="cursor-pointer bg-blue-500 text-white p-2 rounded-md w-full transition-opacity duration-150 hover:bg-blue-600">Оформить</button>
+                        <button @click="clearCart" class="cursor-pointer bg-red-600 text-white p-2 rounded-md w-full mt-2 transition-opacity duration-150 hover:bg-red-700">Очистить корзину</button>
                     </div>
                 </div>
                 <div v-if="authLoading" class="text-gray-300">Загрузка...</div>
                 <div v-else-if="isLoggedIn" class="relative">
-                    <button @click="toggleUserMenu" class="flex items-center space-x-2">
+                    <button @click="toggleUserMenu" class="flex items-center space-x-2 cursor-pointer">
                         <img :src="user.avatar || 'https://via.placeholder.com/32'" class="w-8 h-8 rounded-full" alt="User Avatar" />
                         <span>{{ user.name }}</span>
                     </button>
-                    <div v-if="showUserMenu" class="absolute top-10 right-0 bg-gray-800 text-white rounded shadow w-48 p-2">
+                    <div v-if="showUserMenu" class="absolute top-10 right-0 bg-gray-800 text-white rounded shadow w-48 p-2 transition-opacity duration-200">
                         <router-link to="/profile" class="block p-2 hover:bg-gray-700 rounded">Профиль</router-link>
                         <button @click="logout" class="block w-full text-left p-2 hover:bg-gray-700 rounded">Выйти</button>
                     </div>
                 </div>
                 <div v-else class="flex space-x-2">
-                    <button @click="showLogin = true" class="bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700">Войти</button>
-                    <button @click="showRegister = true" class="bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700">Регистрация</button>
+                    <button @click="showLogin = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700 transition-opacity duration-200">Войти</button>
+                    <button @click="showRegister = true" class="cursor-pointer bg-blue-600 p-2 px-4 rounded-lg hover:bg-blue-700 transition-opacity duration-200">Регистрация</button>
                 </div>
             </div>
         </nav>
@@ -51,39 +52,37 @@
                 :filters="filters"
                 :pagination="pagination"
                 :is-dark-mode="isDarkMode"
-                :user="user"
                 @update:filters="filters = $event"
                 @add-to-cart="addToCart"
                 @change-page="fetchKnives"
-                @logout="logout"
             ></router-view>
         </div>
         <div v-if="showLogin" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
-            <div class="p-6 rounded-lg shadow max-w-md w-full" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+            <div class="p-6 rounded-lg shadow max-w-md w-full transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                 <h2 class="text-xl font-bold mb-4">Вход</h2>
                 <input v-model="loginForm.email" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="loginForm.password" type="password" placeholder="Пароль" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <div class="flex space-x-2">
-                    <button @click="login" class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Войти</button>
-                    <button @click="showLogin = false" class="bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600">Отмена</button>
+                    <button @click="login" class="cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Войти</button>
+                    <button @click="showLogin = false" class="cursor-pointer bg-gray-500 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Отмена</button>
                 </div>
             </div>
         </div>
         <div v-if="showRegister" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
-            <div class="p-6 rounded-lg shadow max-w-md w-full" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+            <div class="p-6 rounded-lg shadow max-w-md w-full transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                 <h2 class="text-xl font-bold mb-4">Регистрация</h2>
                 <input v-model="registerForm.name" type="text" placeholder="Имя" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="registerForm.email" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="registerForm.password" type="password" placeholder="Пароль" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <input v-model="registerForm.password_confirmation" type="password" placeholder="Подтвердите пароль" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <div class="flex space-x-2">
-                    <button @click="register" class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Зарегистрироваться</button>
-                    <button @click="showRegister = false" class="bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600">Отмена</button>
+                    <button @click="register" class="cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Зарегистрироваться</button>
+                    <button @click="showRegister = false" class="cursor-pointer bg-gray-500 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Отмена</button>
                 </div>
             </div>
         </div>
         <div v-if="showAddProduct" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
-            <div class="p-6 rounded-lg shadow w-full max-w-2xl" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+            <div class="p-6 rounded-lg shadow w-full max-w-2xl transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                 <h2 class="text-xl font-bold mb-4">Добавить нож</h2>
                 <input v-model="newKnife.market_hash_name" type="text" placeholder="Название ножа (например, ★ Karambit | Doppler (Factory New))" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'" />
                 <select v-model="newKnife.type" class="w-full p-2 border rounded mb-2" :class="isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'">
@@ -99,18 +98,17 @@
                     <option value="Gut Knife">Gut Knife</option>
                 </select>
                 <div class="flex space-x-2">
-                    <button @click="addProduct" class="bg-green-600 text-white p-2 rounded-md hover:bg-green-700">Добавить</button>
-                    <button @click="showAddProduct = false" class="bg-gray-600 text-white p-2 rounded-md hover:bg-gray-700">Отмена</button>
+                    <button @click="addProduct" class="cursor-pointer bg-green-600 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Добавить</button>
+                    <button @click="showAddProduct = false" class="cursor-pointer bg-gray-600 text-white p-2 rounded-md hover:opacity-80 transition-opacity duration-150">Отмена</button>
                 </div>
             </div>
         </div>
         <div v-if="showAlert" class="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow">
             Зарегистрируйтесь, чтобы добавить товары в корзину!
-            <button @click="showAlert = false" class="ml-2 underline hover:opacity-80">Закрыть</button>
+            <button @click="showAlert = false" class="cursor-pointer ml-2 underline hover:opacity-80 transition-opacity">Закрыть</button>
         </div>
     </div>
 </template>
-
 <script>
 import axios from 'axios';
 import { useRouter } from 'vue-router';
@@ -123,8 +121,17 @@ export default {
     data() {
         return {
             knives: [],
-            pagination: { current_page: 1, last_page: 1, total: 0 },
-            filters: { type: '', wear_level: '', price_min: '', price_max: '', search: '' },
+            pagination: {
+                current_page: 1,
+                last_page: 1,
+                total: 0,
+            },
+            filters: {
+                type: '',
+                wear_level: '',
+                price_min: '',
+                price_max: ''
+            },
             searchQuery: '',
             cart: [],
             isLoggedIn: false,
@@ -135,12 +142,11 @@ export default {
             showAddProduct: false,
             showAlert: false,
             showUserMenu: false,
-            showCart: false,
             error: null,
             isDarkMode: false,
             loginForm: { email: '', password: '' },
             registerForm: { name: '', email: '', password: '', password_confirmation: '' },
-            newKnife: { market_hash_name: '', type: '' },
+            newKnife: { market_hash_name: '', type: '' }
         };
     },
     created() {
@@ -153,7 +159,6 @@ export default {
             try {
                 this.error = null;
                 this.knives = [];
-                this.loading = true;
                 const params = { ...this.filters, search: this.searchQuery.trim(), page };
                 const response = await axios.get('/api/knives', { params });
                 this.knives = response.data.data;
@@ -162,14 +167,12 @@ export default {
                     last_page: response.data.last_page,
                     total: response.data.total,
                 };
-                if (!this.knives.length && (this.searchQuery || Object.values(this.filters).some(v => v))) {
+                if (this.knives.length === 0 && (this.searchQuery || Object.values(this.filters).some(v => v))) {
                     this.error = 'Ножи не найдены.';
                 }
             } catch (error) {
                 console.error('Ошибка загрузки ножей:', error);
-                this.error = 'Не удалось загрузить ножи.';
-            } finally {
-                this.loading = false;
+                this.error = 'Не удалось загрузить ножи. Попробуйте позже.';
             }
         },
         async addToCart(knife) {
@@ -198,18 +201,6 @@ export default {
                 this.error = 'Не удалось очистить корзину.';
             }
         },
-        async checkout() {
-            try {
-                await axios.post('/api/cart/checkout', {}, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                });
-                this.cart = [];
-                this.showCart = false;
-            } catch (error) {
-                console.error('Ошибка оформления заказа:', error);
-                this.error = 'Не удалось оформить заказ.';
-            }
-        },
         async checkAuth() {
             this.authLoading = true;
             const token = localStorage.getItem('token');
@@ -220,7 +211,7 @@ export default {
                     });
                     this.isLoggedIn = true;
                     this.user = response.data;
-                    await this.fetchCart();
+                    this.fetchCart();
                 } catch {
                     localStorage.removeItem('token');
                     this.isLoggedIn = false;
@@ -251,7 +242,7 @@ export default {
                 this.router.push('/');
             } catch (error) {
                 console.error('Ошибка входа:', error);
-                this.error = 'Ошибка входа: ' + (error.response?.data?.message || 'Неизвестная ошибка');
+                alert('Ошибка входа: ' + (error.response?.data?.message || 'Неизвестная ошибка'));
             }
         },
         async register() {
@@ -262,7 +253,7 @@ export default {
                 this.registerForm = { name: '', email: '', password: '', password_confirmation: '' };
             } catch (error) {
                 console.error('Ошибка регистрации:', error);
-                this.error = 'Ошибка регистрации: ' + (error.response?.data?.message || 'Неизвестная ошибка');
+                alert('Ошибка регистрации: ' + (error.response?.data?.message || 'Неизвестная ошибка'));
             }
         },
         async logout() {
@@ -291,7 +282,7 @@ export default {
                 this.fetchKnives();
             } catch (error) {
                 console.error('Ошибка добавления ножа:', error);
-                this.error = 'Ошибка добавления: ' + (error.response?.data?.message || 'Неизвестная ошибка');
+                alert('Ошибка добавления: ' + (error.response?.data?.message || 'Неизвестная ошибка'));
             }
         },
         toggleTheme() {
@@ -307,9 +298,6 @@ export default {
         toggleUserMenu() {
             this.showUserMenu = !this.showUserMenu;
         },
-        toggleCart() {
-            this.showCart = !this.showCart;
-        },
     },
     watch: {
         filters: {
@@ -320,7 +308,6 @@ export default {
         },
         searchQuery: {
             handler() {
-                this.filters.search = this.searchQuery;
                 this.fetchKnives();
             },
         },

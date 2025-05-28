@@ -1,108 +1,62 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Knife;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class KnifeController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
-        try {
-            $cacheKey = 'knives_filtered_' . md5(json_encode($request->all()));
-            $perPage = 9;
-            $page = max(1, (int)$request->input('page', 1));
+        $query = Knife::query();
 
-            $filteredKnives = Cache::remember($cacheKey, 3600, function () use ($request) {
-                $knives = Knife::all();
-                $enrichedKnives = $this->enrichWithSteamData($knives->all());
-
-                return array_filter($enrichedKnives, function ($knife) use ($request) {
-                    if ($request->filled('type') && $knife['type'] !== $request->type) return false;
-                    if ($request->filled('wear_level') && $knife['wear_level'] !== $request->wear_level) return false;
-                    if ($request->filled('price_min') && $knife['price'] < (float)$request->price_min) return false;
-                    if ($request->filled('price_max') && $knife['price'] > (float)$request->price_max) return false;
-                    if ($request->filled('search') && !str_contains(strtolower($knife['name']), strtolower($request->search))) return false;
-                    return true;
-                });
-            });
-
-            $filteredKnives = array_values($filteredKnives);
-            $total = count($filteredKnives);
-            $paginatedKnives = array_slice($filteredKnives, ($page - 1) * $perPage, $perPage);
-
-            return response()->json([
-                'data' => $paginatedKnives,
-                'current_page' => $page,
-                'last_page' => (int)ceil($total / $perPage),
-                'total' => $total,
-            ]);
-        } catch (\Exception $ex) {
-            Log::error('KnifeController::index failed', ['error' => $ex->getMessage(), 'trace' => $ex->getTraceAsString()]);
-            return response()->json(['error' => 'Не удалось загрузить ножи'], 500);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
         }
+        if ($request->filled('wear_level')) {
+            $query->where('market_hash_name', 'LIKE', '%' . $this->mapWearLevelToRussian($request->wear_level) . '%');
+        }
+        if ($request->filled('search')) {
+            $query->where('market_hash_name', 'LIKE', '%' . strtolower($request->search) . '%');
+        }
+
+        $knives = $query->paginate(9);
+        $enrichedKnives = $this->enrichWithSteamData($knives->items(), $request);
+
+        return response()->json([
+            'data' => $enrichedKnives,
+            'current_page' => $knives->currentPage(),
+            'last_page' => $knives->lastPage(),
+            'total' => $knives->total(),
+        ]);
     }
 
-    private function enrichWithSteamData(array $knives): array
+    private function enrichWithSteamData($knives, Request $request)
     {
-        $cacheKey = 'steam_knives_' . md5(json_encode($knives));
+        $cacheKey = 'steam_knives_' . md5(json_encode($knives) . json_encode($request->all()));
 
-        return Cache::remember($cacheKey, 300, function () use ($cacheKey, $knives) {
+        return Cache::remember($cacheKey, 3600, function () use ($knives, $request) {
             $enriched = [];
-            $wearLevels = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred'];
+            $wearLevels = [
+                'Прямо с завода' => 'Factory New',
+                'Немного поношенное' => 'Minimal Wear',
+                'После полевых испытаний' => 'Field-Tested',
+                'Поношенное' => 'Well-Worn',
+                'Закалённое в боях' => 'Battle-Scarred',
+            ];
+
+            // Limit the number of API calls to avoid rate limits
+            $maxApiCalls = 5; // Adjust based on Steam's rate limit
+            $currentCalls = 0;
 
             foreach ($knives as $knife) {
-                try {
-                    $response = Http::retry(3, 100)->get('https://steamcommunity.com/market/search/render', [
-                        'query' => $knife->market_hash_name,
-                        'appid' => 730,
-                        'norender' => true,
-                        'count' => 1,
-                    ]);
-
-                    if ($response->successful() && !empty($response->json()['results'])) {
-                        $data = $response->json()['results'][0];
-                        $name = $data['name'] ?? $knife->market_hash_name;
-                        $wearLevel = null;
-                        foreach ($wearLevels as $level) {
-                            if (str_contains($name, $level)) {
-                                $wearLevel = $level;
-                                break;
-                            }
-                        }
-
-                        $enriched[] = [
-                            'id' => $knife->id,
-                            'name' => $name,
-                            'type' => $knife->type,
-                            'rarity' => 'Covert',
-                            'wear_level' => $wearLevel,
-                            'price' => ($data['sell_price'] ?? 0) / 100,
-                            'image_url' => isset($data['asset_description']['icon_url'])
-                                ? 'https://steamcommunity-a.akamaihd.net/economy/image/' . $data['asset_description']['icon_url']
-                                : '',
-                            'description' => $data['asset_description']['type'] ?? 'Данные недоступны',
-                        ];
-                    } else {
-                        throw new \Exception('Empty or invalid Steam API response');
-                    }
-                } catch (\Exception $ex) {
-                    Log::warning('Failed to fetch Steam data for knife', [
-                        'knife' => $knife->market_hash_name,
-                        'error' => $ex->getMessage(),
-                        'response' => isset($response) ? $response->body() : 'No response',
-                    ]);
-
-                    Cache::forget($cacheKey);
-
+                if ($currentCalls >= $maxApiCalls) {
+                    // Skip API call and use fallback data
                     $enriched[] = [
                         'id' => $knife->id,
                         'name' => $knife->market_hash_name,
@@ -110,8 +64,60 @@ class KnifeController extends Controller
                         'rarity' => 'Covert',
                         'wear_level' => null,
                         'price' => 0,
-                        'image_url' => 'https://via.placeholder.com/150?text=No+Image',
-                        'description' => 'Данные из Steam API недоступны',
+                        'image_url' => '',
+                        'description' => 'Данные недоступны (ограничение API)',
+                    ];
+                    continue;
+                }
+
+                $response = Http::retry(3, 100)->get('https://steamcommunity.com/market/search/render/', [
+                    'query' => $knife->market_hash_name,
+                    'appid' => 730,
+                    'norender' => 1,
+                    'count' => 1,
+                ]);
+
+                $currentCalls++;
+
+                if ($response->successful() && !empty($response->json()['results'])) {
+                    $steamData = $response->json()['results'][0];
+                    $name = $steamData['name'];
+                    $wearLevel = null;
+                    foreach ($wearLevels as $ru => $en) {
+                        if (str_contains($name, $ru)) {
+                            $wearLevel = $en;
+                            break;
+                        }
+                    }
+
+                    $price = $steamData['sell_price'] / 100;
+                    if ($request->filled('price_min') && $price < $request->price_min) {
+                        continue;
+                    }
+                    if ($request->filled('price_max') && $price > $request->price_max) {
+                        continue;
+                    }
+
+                    $enriched[] = [
+                        'id' => $knife->id,
+                        'name' => $name,
+                        'type' => $knife->type,
+                        'rarity' => 'Covert',
+                        'wear_level' => $wearLevel,
+                        'price' => $price,
+                        'image_url' => 'https://steamcommunity-a.akamaihd.net/economy/image/' . $steamData['asset_description']['icon_url'],
+                        'description' => $steamData['asset_description']['type'],
+                    ];
+                } else {
+                    $enriched[] = [
+                        'id' => $knife->id,
+                        'name' => $knife->market_hash_name,
+                        'type' => $knife->type,
+                        'rarity' => 'Covert',
+                        'wear_level' => null,
+                        'price' => 0,
+                        'image_url' => '',
+                        'description' => 'Данные недоступны',
                     ];
                 }
             }
@@ -120,17 +126,27 @@ class KnifeController extends Controller
         });
     }
 
-    public function store(Request $request): JsonResponse
+    private function mapWearLevelToRussian($wearLevel)
+    {
+        $map = [
+            'Factory New' => 'Прямо с завода',
+            'Minimal Wear' => 'Немного поношенное',
+            'Field-Tested' => 'После полевых испытаний',
+            'Well-Worn' => 'Поношенное',
+            'Battle-Scarred' => 'Закалённое в боях',
+        ];
+        return $map[$wearLevel] ?? '';
+    }
+
+    public function store(Request $request)
     {
         $this->authorize('create', Knife::class);
-
         $validated = $request->validate([
             'market_hash_name' => 'required|string|max:255|unique:knives',
             'type' => 'required|string',
         ]);
 
         $knife = Knife::create($validated);
-        Cache::flush();
         return response()->json($knife, 201);
     }
 }
