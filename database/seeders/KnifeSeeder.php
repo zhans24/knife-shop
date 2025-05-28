@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use App\Models\Knife;
@@ -9,27 +8,20 @@ class KnifeSeeder extends Seeder
 {
     public function run()
     {
-        Knife::create([
-            'name' => 'Karambit Fade',
-            'type' => 'Karambit',
-            'rarity' => 'Covert',
-            'float_value' => 0.01,
-            'wear_level' => 'Factory New',
-            'price' => 1200.00,
-            'description' => 'A beautiful fade pattern karambit',
-            'color' => 'Fade',
-            'image_url' => 'https://via.placeholder.com/150',
-        ]);
-        Knife::create([
-            'name' => 'Bayonet Blue Steel',
-            'type' => 'Bayonet',
-            'rarity' => 'Classified',
-            'float_value' => 0.45,
-            'wear_level' => 'Field-Tested',
-            'price' => 350.00,
-            'description' => 'Blue steel finish bayonet',
-            'color' => 'Blue',
-            'image_url' => 'https://via.placeholder.com/150',
-        ]);
+        $knives = [
+            ['market_hash_name' => '★ Karambit | Doppler (Factory New)', 'type' => 'Karambit'],
+            ['market_hash_name' => '★ Bayonet | Fade (Factory New)', 'type' => 'Bayonet'],
+            ['market_hash_name' => '★ Skeleton Knife', 'type' => 'Skeleton Knife'],
+            ['market_hash_name' => '★ Bowie Knife', 'type' => 'Bowie Knife'],
+            ['market_hash_name' => '★ Falchion Knife', 'type' => 'Falchion Knife'],
+            ['market_hash_name' => '★ Paracord Knife | Scorched (Factory New)', 'type' => 'Paracord Knife'],
+            ['market_hash_name' => '★ Navaja Knife | Doppler (Factory New)', 'type' => 'Navaja Knife'],
+            ['market_hash_name' => '★ Huntsman Knife | Doppler (Factory New)', 'type' => 'Huntsman Knife'],
+            ['market_hash_name' => '★ Gut Knife | Doppler (Factory New)', 'type' => 'Gut Knife'],
+        ];
+
+        foreach ($knives as $knife) {
+            Knife::updateOrCreate(['market_hash_name' => $knife['market_hash_name']], $knife);
+        }
     }
 }
