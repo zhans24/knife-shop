@@ -40,38 +40,29 @@
             <div v-else-if="knives.length === 0" class="text-center p-4" :class="isDarkMode ? 'text-gray-300' : 'text-gray-600'">Ножи не найдены</div>
             <transition-group name="knife-list" tag="div" class="grid grid-cols-3 gap-4 mb-20">
                 <div v-for="knife in knives" :key="knife.id" class="border p-4 rounded shadow transition-colors duration-200" :class="isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-300'">
-                    <img :src="knife.image_url" :alt="knife.name" class="w-full h-40 object-contain mb-2 rounded" loading="lazy" />
-                    <h3 class="text-lg font-bold">{{ knife.name }}</h3>
+                    <img :src="knife.image_url || '/placeholder.jpg'" :alt="knife.name || 'Knife'" class="w-full h-40 object-contain mb-2 rounded" loading="lazy" />
+                    <h3 class="text-lg font-bold">{{ knife.name || 'Без названия' }}</h3>
                     <p>Тип: {{ knife.type || 'N/A' }}</p>
                     <p>Редкость: {{ knife.rarity || 'N/A' }}</p>
                     <p>Износ: {{ knife.wear_level || 'N/A' }}</p>
-                    <p>Цена: ${{ knife.price.toFixed(2) }}</p>
+                    <p>Цена: {{ typeof knife.price === 'number' ? '$' + knife.price.toFixed(2) : 'N/A' }}</p>
                     <p>{{ knife.description || 'Нет описания' }}</p>
-                    <button @click="$emit('add-to-cart', knife)" class="cursor-pointer bg-blue-600 text-white p-2 rounded-md w-full mt-2 hover:opacity-80 transition-opacity duration-150">Добавить в корзину</button>
+                    <button @click="$emit('add-to-cart', knife)" class="cursor-pointer bg-blue-600 text-white p-2 rounded-md w-full mt-2 hover:bg-blue-700 transition-colors">Добавить в корзину</button>
                 </div>
             </transition-group>
-            <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center space-x-2 bg-opacity-90 p-4 rounded-lg" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'">
-                <button :disabled="pagination.current_page === 1 || loading" @click="$emit('change-page', pagination.current_page - 1)" class="cursor-pointer bg-gray-600 text-white p-2 px-4 rounded-md disabled:opacity-50 hover:opacity-80 transition-opacity duration-150">Назад</button>
+            <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex justify-center space-x-2 bg-opacity-90 p-4 rounded-md" :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'">
+                <button :disabled="pagination.current_page === 1 || loading" @click="$emit('change-page', pagination.current_page - 1)" class="cursor-pointer bg-gray-600 text-white p-2 px-4 rounded-md disabled:opacity-50 hover:bg-gray-700 transition-colors">Назад</button>
                 <span class="flex items-center" :class="isDarkMode ? 'text-gray-200' : 'text-gray-800'">Страница {{ pagination.current_page }} из {{ pagination.last_page }}</span>
-                <button :disabled="pagination.current_page === pagination.last_page || loading" @click="$emit('change-page', pagination.current_page + 1)" class="cursor-pointer bg-gray-600 text-white p-2 px-4 rounded-md disabled:opacity-50 hover:opacity-80 transition-opacity duration-150">Вперёд</button>
+                <button :disabled="pagination.current_page === pagination.last_page || loading" @click="$emit('change-page', pagination.current_page + 1)" class="cursor-pointer bg-gray-600 text-white p-2 px-4 rounded-md disabled:opacity-50 hover:bg-gray-700 transition-colors">Вперёд</button>
             </div>
         </div>
     </div>
 </template>
+
 <script>
 export default {
-    props: ['knives', 'filters', 'pagination', 'isDarkMode'],
+    props: ['knives', 'filters', 'pagination', 'isDarkMode', 'loading'],
     emits: ['update:filters', 'add-to-cart', 'change-page'],
-    data() {
-        return {
-            loading: false,
-        };
-    },
-    watch: {
-        knives() {
-            this.loading = false;
-        },
-    },
 };
 </script>
 

@@ -1,8 +1,8 @@
+import './bootstrap';
 import { createApp } from 'vue';
-import App from './components/App.vue';
+import App from './pages/App.vue';
 import router from './router';
-import './bootstrap.js'
 
-axios.get('/sanctum/csrf-cookie').then(() => {
-    createApp(App).use(router).mount('#app');
-});
+const app = createApp(App);
+app.use(router);
+app.mount('#app');
