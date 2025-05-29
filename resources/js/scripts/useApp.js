@@ -5,225 +5,213 @@ import { useCart } from './useCart';
 
 export function useApp() {
     const router = useRouter();
-    const isLoggedIn = ref(false);
-
-    const fetchCsrfToken = async () => {
-        try {
-            await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
-        } catch (error) {
-            console.error('Failed to fetch CSRF token:', error.response?.data || error.message);
-        }
-    };
-
-    const {
-        cart,
-        showAlert,
-        totalPrice,
-        fetchCart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        checkout,
-    } = useCart(isLoggedIn, fetchCsrfToken);
-
-    // State
-    const knives = ref([]);
-    const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
-    const filters = ref({ type: '', wear_level: '', price_min: '', price_max: '', search: '' });
+    const isDarkMode = ref(localStorage.getItem('theme') === 'dark');
     const searchQuery = ref('');
+    const knives = ref([]);
+    const filters = ref({
+        type: '',
+        wear_level: '',
+        price_min: '',
+        price_max: '',
+    });
+    const pagination = ref({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+    });
     const loading = ref(false);
+    const authLoading = ref(false);
+    const isLoggedIn = ref(!!localStorage.getItem('token'));
     const user = ref(null);
-    const authLoading = ref(true);
     const showLogin = ref(false);
     const showRegister = ref(false);
-    const showUserMenu = ref(false);
+    const showSuccessModal = ref(false);
     const showCartMenu = ref(false);
-    const isDarkMode = ref(false);
+    const showUserMenu = ref(false);
     const error = ref(null);
 
-    const fetchKnives = async (page = 1) => {
+    const { cart, showAlert, totalPrice, showCheckoutModal, fetchCart, addToCart, removeFromCart, updateQuantity, clearCart, checkout } = useCart(isLoggedIn);
+
+    const getCsrfCookie = async () => {
         try {
-            loading.value = true;
-            error.value = null;
-            knives.value = [];
-            const params = { ...filters.value, search: searchQuery.value.trim(), page };
-            const response = await axios.get('/api/knives', { params });
-            if (Array.isArray(response.data.data)) {
-                knives.value = response.data.data.map((knife) => ({
-                    ...knife,
-                    price: knife.price ? parseFloat(knife.price) : null,
-                }));
-                pagination.value = {
-                    current_page: response.data.current_page || 1,
-                    last_page: response.data.last_page || 1,
-                    total: response.data.total || 0,
-                };
-            } else {
-                throw new Error('Invalid API response');
-            }
+            await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
         } catch (err) {
-            console.error('Ошибка загрузки ножей:', err);
-            error.value = err.response?.data?.message || 'Не удалось загрузить данные.';
-        } finally {
-            loading.value = false;
+            console.error('CSRF fetch error:', err);
         }
     };
 
-    const checkAuth = async () => {
-        authLoading.value = true;
+    const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                await fetchCsrfToken();
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Исправлено: убрана лишняя кавычка
-                const response = await axios.get('/api/user', { withCredentials: true });
-                if (response.data && typeof response.data === 'object') {
-                    isLoggedIn.value = true;
-                    user.value = response.data;
-                    await fetchCart();
-                } else {
-                    throw new Error('Invalid user data');
-                }
-            } catch (err) {
-                localStorage.removeItem('token');
-                delete axios.defaults.headers.common['Authorization'];
-                isLoggedIn.value = false;
-                user.value = null;
-            }
-        } else {
-            isLoggedIn.value = false;
-            user.value = null;
-        }
-        authLoading.value = false;
-    };
-
-    const login = async (credentials) => {
-        try {
-            await fetchCsrfToken();
-            const response = await axios.post('/api/login', credentials, { withCredentials: true });
-            if (response.data.token && response.data.user) {
-                localStorage.setItem('token', response.data.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-                isLoggedIn.value = true;
-                user.value = response.data.user;
-                showLogin.value = false;
-                error.value = null;
-                await fetchCart();
-                router.push('/');
-            }
-        } catch (error) {
-            console.error('Ошибка :', error);
-            if (error.response?.status === 422) {
-                error.value = error.response.data.errors?.email?.[0] || 'Неверные данные.';
-            } else {
-                error.value = error.response?.data?.message || 'Ошибка входа.';
-            }
-        }
-    };
-
-    const register = async (data) => {
-        try {
-            await fetchCsrfToken();
-            const response = await axios.post('/api/register', data, { withCredentials: true });
-            if (response.data.token && response.data.user) {
-                localStorage.setItem('token', response.data.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-                isLoggedIn.value = true;
-                user.value = response.data.user;
-                showRegister.value = false;
-                error.value = null;
-                await fetchCart();
-                router.push('/');
-            }
-        } catch (error) {
-            console.error('Ошибка регистрации:', error);
-            error.value = error.response?.data?.message || 'Ошибка регистрации.';
-        }
-    };
-
-    const logout = async () => {
-        try {
-            await fetchCsrfToken();
-            await axios.post(
-                '/api/logout',
-                {},
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                    withCredentials: true,
-                }
-            );
-            localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
-            isLoggedIn.value = false;
-            user.value = null;
-            cart.value = [];
-            showUserMenu.value = false;
-            error.value = null;
-            router.push('/');
-        } catch (error) {
-            console.error('Ошибка выхода:', error);
-            error.value = error.response?.data?.message || 'Не удалось выйти.';
-        }
+        return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     };
 
     const toggleTheme = () => {
         isDarkMode.value = !isDarkMode.value;
         localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
-        document.body.classList.toggle('dark', isDarkMode.value);
+        document.documentElement.classList.toggle('dark', isDarkMode.value);
     };
 
-    const loadTheme = () => {
-        const theme = localStorage.getItem('theme');
-        isDarkMode.value = theme === 'dark';
-        document.body.classList.toggle('dark', isDarkMode.value);
+    const toggleCartMenu = () => {
+        showCartMenu.value = !showCartMenu.value;
+        if (showCartMenu.value && isLoggedIn.value) {
+            fetchCart();
+        }
     };
 
     const toggleUserMenu = () => {
         showUserMenu.value = !showUserMenu.value;
     };
 
-    const toggleCartMenu = () => {
-        showCartMenu.value = !showCartMenu.value;
+    const fetchKnives = async (page = 1) => {
+        try {
+            loading.value = true;
+            const response = await axios.get('/api/knives', {
+                params: {
+                    page,
+                    search: searchQuery.value,
+                    type: filters.value.type,
+                    wear_level: filters.value.wear_level,
+                    price_min: filters.value.price_min,
+                    price_max: filters.value.price_max,
+                },
+            });
+            knives.value = response.data.data;
+            pagination.value = {
+                current_page: response.data.current_page,
+                last_page: response.data.last_page,
+                total: response.data.total,
+            };
+            error.value = null;
+        } catch (err) {
+            console.error('Ошибка загрузки ножей:', err);
+            error.value = 'Не удалось загрузки ножи.';
+        } finally {
+            loading.value = false;
+        }
     };
 
-    loadTheme();
-    checkAuth();
-    fetchKnives();
+    const fetchUser = async () => {
+        try {
+            authLoading.value = true;
+            const response = await axios.get('/api/user', getAuthHeaders());
+            user.value = response.data;
+            isLoggedIn.value = true;
+            error.value = null;
+        } catch (err) {
+            console.error('Ошибка загрузки пользователя:', err);
+            isLoggedIn.value = false;
+            localStorage.removeItem('token');
+            error.value = 'Не удалось загрузить данные пользователя.';
+        } finally {
+            authLoading.value = false;
+        }
+    };
 
-    watch(filters, () => fetchKnives(), { deep: true });
-    watch(searchQuery, () => {
-        filters.value.search = searchQuery.value;
+    const login = async (form) => {
+        try {
+            authLoading.value = true;
+            await getCsrfCookie();
+            const response = await axios.post('/api/login', form, { withCredentials: true });
+            localStorage.setItem('token', response.data.token);
+            user.value = response.data.user;
+            isLoggedIn.value = true;
+            showLogin.value = false;
+            error.value = null;
+            await fetchUser();
+            await fetchCart();
+        } catch (err) {
+            console.error('Ошибка:', err);
+            error.value = err.response?.data?.message || 'Не удалось войти.';
+        } finally {
+            authLoading.value = false;
+        }
+    };
+
+    const register = async (form) => {
+        try {
+            authLoading.value = true;
+            await getCsrfCookie();
+            await axios.post('/api/register', form, { withCredentials: true });
+            showRegister.value = false;
+            showSuccessModal.value = true;
+            error.value = null;
+        } catch (err) {
+            console.error('Ошибка регистрации:', err);
+            error.value = err.response?.data?.message || 'Не удалось зарегистрироваться.';
+        } finally {
+            authLoading.value = false;
+        }
+    };
+
+    const closeSuccessModal = () => {
+        showSuccessModal.value = false;
+        showLogin.value = true;
+    };
+
+    const logout = async () => {
+        try {
+            await axios.post('/api/logout', {}, getAuthHeaders());
+            localStorage.removeItem('token');
+            user.value = null;
+            isLoggedIn.value = false;
+            cart.value = [];
+            showUserMenu.value = false;
+            error.value = null;
+            router.push('/');
+        } catch (err) {
+            console.error('Ошибка выхода:', err);
+            error.value = err.response?.data?.message || 'Не удалось выйти.';
+        }
+    };
+
+    const closeRegisterModal = (redirectToLogin = false) => {
+        showRegister.value = false;
+        error.value = null;
+        if (redirectToLogin) {
+            showLogin.value = true;
+        }
+    };
+
+    watch([filters, searchQuery], () => {
         fetchKnives();
-    });
+    }, { deep: true });
+
+    fetchKnives();
+    if (isLoggedIn.value) {
+        fetchUser();
+        fetchCart();
+    }
 
     return {
-        knives,
-        pagination,
-        filters,
+        isDarkMode,
         searchQuery,
+        knives,
+        filters,
+        pagination,
         loading,
+        authLoading,
         isLoggedIn,
         user,
-        authLoading,
         showLogin,
         showRegister,
-        showAlert,
-        showUserMenu,
+        showSuccessModal,
         showCartMenu,
-        isDarkMode,
+        showUserMenu,
         error,
         cart,
+        showAlert,
         totalPrice,
+        showCheckoutModal,
+        toggleTheme,
+        toggleCartMenu,
+        toggleUserMenu,
         fetchKnives,
-        checkAuth,
+        fetchUser,
         login,
         register,
+        closeSuccessModal,
         logout,
-        toggleTheme,
-        loadTheme,
-        toggleUserMenu,
-        toggleCartMenu,
+        closeRegisterModal,
         addToCart,
         removeFromCart,
         updateQuantity,

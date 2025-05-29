@@ -26,16 +26,17 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            $token = $user->createToken('auth_token', [], null)->plainTextToken;
-
-
             return response()->json([
                 'user' => $user,
-                'token' => $token,
+                'message' => 'Registration successful',
             ], 201);
         } catch (\Exception $e) {
-            Log::error('reg error: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to register'], 500);
+            Log::error('Registration error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json(['message' => 'Failed to register', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -54,26 +55,21 @@ class AuthController extends Controller
                     'email' => ['Неверные данные'],
                 ]);
             }
+
             $user->tokens()->delete();
-
-            $token = $user->createToken('auth_token', [], null)->plainTextToken;
-
-            $request->session()->regenerate();
-
-            Log::info('User logged in', ['user_id' => $user->id]);
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'user' => $user,
                 'token' => $token,
             ])->withCookie(cookie('XSRF-TOKEN', csrf_token(), 525600));
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to login'], 500);
+            Log::error('Login error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json(['message' => 'Failed to login', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -81,16 +77,21 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
             $user->tokens()->delete();
-            $request->session()->invalidate();
             return response()->json(['message' => 'Выход выполнен']);
         } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to logout'], 500);
+            Log::error('Logout error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['message' => 'Failed to logout', 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function user(Request $request): JsonResponse
+    public function checkUser(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
@@ -99,8 +100,11 @@ class AuthController extends Controller
             }
             return response()->json($user);
         } catch (\Exception $e) {
-            Log::error('User fetch error: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to fetch user'], 401);
+            Log::error('User fetch error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['message' => 'Failed to fetch user', 'error' => $e->getMessage()], 401);
         }
     }
 }

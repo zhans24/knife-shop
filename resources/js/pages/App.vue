@@ -1,4 +1,3 @@
-```html
 <template>
     <div
         class="min-h-screen transition-colors duration-300"
@@ -33,7 +32,7 @@
                         ></path>
                     </svg>
                 </div>
-                <!-- Theme Toggle -->
+                <!-- Theme -->
                 <button
                     @click="toggleTheme"
                     class="cursor-pointer p-2 rounded-full hover:bg-gray-600 transition-opacity duration-200"
@@ -83,7 +82,7 @@
                     >
                         <div v-if="cart.length === 0" class="text-center py-4">
                             <p class="text-lg font-semibold">Корзина пуста</p>
-                            <p class="text-sm text-gray-400">Добавьте что-то в корзину!</p>
+                            <p class="text-sm text-gray-500">Добавьте что-то в корзину!</p>
                         </div>
                         <div v-else>
                             <div v-for="item in cart" :key="item.id" class="border p-2 rounded mb-2 flex items-center space-x-2" :class="isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'">
@@ -119,7 +118,7 @@
                             </div>
                             <button
                                 @click="checkout"
-                                class="cursor-pointer bg-blue-500 text-white p-2 rounded-md w-full transition-opacity duration-150 hover:bg-blue-600"
+                                class="cursor-pointer bg-blue-600 text-white p-2 rounded-md w-full transition-opacity duration-150 hover:bg-blue-700"
                             >
                                 Оформить
                             </button>
@@ -204,9 +203,61 @@
             v-if="showRegister"
             :is-dark="isDarkMode"
             :error="error"
-            @register="register"
-            @close="showRegister = false; error = null"
+            @register="form => register(form)"
+            @close="redirect => closeRegisterModal(redirect)"
         />
+        <!-- Success Modal -->
+        <div
+            v-if="showSuccessModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+            <div
+                class="p-6 rounded-lg shadow-lg w-full max-w-md"
+                :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'"
+            >
+                <div class="flex items-center space-x-2">
+                    <svg class="h-6 w-6 text-green-500 checkmark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path class="checkmark-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <h2 class="text-xl font-bold">Успешно зарегистрирован!</h2>
+                </div>
+                <p class="mt-4">Ваш аккаунт создан. Пожалуйста, войдите.</p>
+                <div class="flex justify-end mt-4">
+                    <button
+                        @click="closeSuccessModal"
+                        class="cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors duration-150"
+                    >
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Checkout Modal -->
+        <div
+            v-if="showCheckoutModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+            <div
+                class="p-6 rounded-lg shadow-lg w-full max-w-md"
+                :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'"
+            >
+                <div class="flex items-center space-x-2">
+                    <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h2 class="text-xl font-bold">Уведомление</h2>
+                </div>
+                <p class="mt-4">Функция оформления заказа находится в разработке.</p>
+                <div class="flex justify-end mt-4">
+                    <button
+                        @click="showCheckoutModal = false"
+                        class="cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors duration-150"
+                    >
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- Alert -->
         <div
             v-if="showAlert"
@@ -235,4 +286,16 @@ export default {
     },
 };
 </script>
-```
+
+<style scoped>
+.checkmark-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: draw-checkmark 0.5s ease-in-out forwards;
+}
+@keyframes draw-checkmark {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+</style>

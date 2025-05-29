@@ -5,6 +5,7 @@ export function useCart(isLoggedIn) {
     const cart = ref([]);
     const showAlert = ref(false);
     const error = ref(null);
+    const showCheckoutModal = ref(false);
 
     const totalPrice = computed(() => {
         return cart.value.reduce((sum, item) => {
@@ -111,7 +112,7 @@ export function useCart(isLoggedIn) {
 
     const checkout = async () => {
         try {
-            error.value = 'Функция оформления заказа в разработке.';
+            showCheckoutModal.value = true; // Показываем модальное окно
         } catch (err) {
             console.error('Ошибка оформления заказа:', err);
             error.value = 'Не удалось оформить заказ.';
@@ -123,6 +124,7 @@ export function useCart(isLoggedIn) {
         showAlert,
         error,
         totalPrice,
+        showCheckoutModal,
         fetchCart,
         addToCart,
         removeFromCart,
